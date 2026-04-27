@@ -1,0 +1,871 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Admin Panel — Portfolio</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:ital,wght@0,300;0,400;0,500;1,300&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --navy: #0a1628;
+      --navy-mid: #0d1f3c;
+      --navy-light: #132244;
+      --accent: #4a9eff;
+      --accent2: #00d4ff;
+      --white: #f0f6ff;
+      --white-dim: rgba(240,246,255,0.65);
+      --white-faint: rgba(240,246,255,0.08);
+      --card: rgba(19,34,68,0.9);
+      --border: rgba(74,158,255,0.18);
+      --danger: #ff4a6e;
+      --success: #00d97e;
+    }
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      background: var(--navy);
+      color: var(--white);
+      font-family: 'DM Sans', sans-serif;
+      font-weight: 300;
+      min-height: 100vh;
+      display: flex;
+    }
+    body::before {
+      content: '';
+      position: fixed; inset: 0;
+      background: radial-gradient(ellipse 70% 50% at 15% 0%, rgba(26,58,110,0.5) 0%, transparent 60%),
+                  radial-gradient(ellipse 50% 40% at 85% 90%, rgba(74,158,255,0.1) 0%, transparent 55%);
+      pointer-events: none; z-index: 0;
+    }
+
+    /* ── SIDEBAR ── */
+    .sidebar {
+      width: 240px; flex-shrink: 0;
+      background: rgba(10,22,40,0.95);
+      border-right: 1px solid var(--border);
+      display: flex; flex-direction: column;
+      padding: 2rem 0;
+      position: fixed; top: 0; left: 0; bottom: 0;
+      z-index: 10;
+    }
+    .sidebar-logo {
+      font-family: 'Syne', sans-serif;
+      font-weight: 800;
+      font-size: 1.1rem;
+      color: var(--accent);
+      padding: 0 1.5rem 2rem;
+      border-bottom: 1px solid var(--border);
+      margin-bottom: 1rem;
+    }
+    .sidebar-logo span { display: block; font-size: 0.7rem; color: var(--white-dim); font-weight: 400; letter-spacing: 0.1em; text-transform: uppercase; margin-top: 0.2rem; }
+    .sidebar-nav { flex: 1; overflow-y: auto; }
+    .nav-item {
+      display: flex; align-items: center; gap: 0.75rem;
+      padding: 0.75rem 1.5rem;
+      font-size: 0.88rem;
+      color: var(--white-dim);
+      cursor: pointer;
+      transition: all .2s;
+      border-left: 2px solid transparent;
+    }
+    .nav-item:hover { color: var(--white); background: var(--white-faint); }
+    .nav-item.active { color: var(--accent); border-left-color: var(--accent); background: rgba(74,158,255,0.07); }
+    .nav-icon { width: 18px; text-align: center; font-size: 1rem; }
+    .sidebar-footer { padding: 1rem 1.5rem; border-top: 1px solid var(--border); }
+    .btn-preview {
+      display: block; width: 100%;
+      text-align: center;
+      background: var(--accent);
+      color: var(--navy);
+      padding: 0.65rem;
+      border-radius: 8px;
+      font-family: 'Syne', sans-serif;
+      font-weight: 700;
+      font-size: 0.82rem;
+      letter-spacing: 0.05em;
+      text-decoration: none;
+      transition: background .2s;
+      cursor: pointer;
+    }
+    .btn-preview:hover { background: var(--accent2); }
+
+    /* ── MAIN CONTENT ── */
+    .main {
+      margin-left: 240px;
+      flex: 1;
+      padding: 2.5rem 3rem;
+      position: relative; z-index: 1;
+      max-width: calc(100vw - 240px);
+    }
+    .page-header { margin-bottom: 2rem; }
+    .page-header h1 { font-family: 'Syne', sans-serif; font-weight: 800; font-size: 1.7rem; margin-bottom: 0.3rem; }
+    .page-header p { font-size: 0.88rem; color: var(--white-dim); }
+
+    /* ── PANELS ── */
+    .panel { display: none; }
+    .panel.active { display: block; }
+
+    /* ── FORM STYLES ── */
+    .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1.2rem; }
+    .form-full { grid-column: 1 / -1; }
+    .form-group { display: flex; flex-direction: column; gap: 0.4rem; }
+    label { font-size: 0.78rem; letter-spacing: 0.08em; text-transform: uppercase; color: var(--accent); }
+    input, textarea, select {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 0.7rem 1rem;
+      color: var(--white);
+      font-family: 'DM Sans', sans-serif;
+      font-size: 0.9rem;
+      font-weight: 300;
+      outline: none;
+      transition: border-color .2s;
+      width: 100%;
+    }
+    input:focus, textarea:focus, select:focus { border-color: var(--accent); }
+    textarea { resize: vertical; min-height: 90px; }
+    select option { background: var(--navy-mid); }
+
+    /* ── CARD CONTAINER ── */
+    .section-card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 1.8rem;
+      margin-bottom: 1.5rem;
+    }
+    .section-card-title {
+      font-family: 'Syne', sans-serif;
+      font-weight: 700;
+      font-size: 1rem;
+      margin-bottom: 1.4rem;
+      color: var(--white);
+      display: flex; justify-content: space-between; align-items: center;
+    }
+
+    /* ── BUTTONS ── */
+    .btn {
+      padding: 0.6rem 1.4rem;
+      border-radius: 8px;
+      font-family: 'Syne', sans-serif;
+      font-weight: 700;
+      font-size: 0.82rem;
+      letter-spacing: 0.04em;
+      cursor: pointer;
+      border: none;
+      transition: all .2s;
+    }
+    .btn-primary { background: var(--accent); color: var(--navy); }
+    .btn-primary:hover { background: var(--accent2); }
+    .btn-danger { background: rgba(255,74,110,0.15); color: var(--danger); border: 1px solid rgba(255,74,110,0.3); }
+    .btn-danger:hover { background: rgba(255,74,110,0.25); }
+    .btn-ghost { background: var(--white-faint); color: var(--white-dim); border: 1px solid var(--border); }
+    .btn-ghost:hover { color: var(--white); border-color: var(--accent); }
+    .btn-success { background: rgba(0,217,126,0.15); color: var(--success); border: 1px solid rgba(0,217,126,0.3); }
+    .btn-success:hover { background: rgba(0,217,126,0.25); }
+    .btn-sm { padding: 0.35rem 0.8rem; font-size: 0.75rem; }
+
+    /* ── LIST ITEMS ── */
+    .list-item {
+      background: rgba(255,255,255,0.03);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 1rem 1.2rem;
+      margin-bottom: 0.7rem;
+      display: flex; align-items: flex-start; justify-content: space-between; gap: 1rem;
+    }
+    .list-item-body { flex: 1; }
+    .list-item-title { font-family: 'Syne', sans-serif; font-weight: 700; font-size: 0.95rem; }
+    .list-item-sub { font-size: 0.82rem; color: var(--accent); margin-top: 0.15rem; }
+    .list-item-desc { font-size: 0.82rem; color: var(--white-dim); margin-top: 0.4rem; }
+    .list-item-actions { display: flex; gap: 0.5rem; flex-shrink: 0; margin-top: 0.1rem; }
+
+    /* ── PHOTO UPLOAD ── */
+    .photo-upload-area {
+      border: 2px dashed var(--border);
+      border-radius: 12px;
+      padding: 2rem;
+      text-align: center;
+      cursor: pointer;
+      transition: border-color .2s;
+      position: relative;
+    }
+    .photo-upload-area:hover { border-color: var(--accent); }
+    .photo-upload-area input[type=file] {
+      position: absolute; inset: 0; opacity: 0; cursor: pointer; width: 100%; height: 100%;
+    }
+    .photo-preview { width: 110px; height: 130px; object-fit: cover; border-radius: 10px; margin: 0 auto 0.8rem; display: block; }
+    .photo-placeholder { font-size: 2.5rem; margin-bottom: 0.5rem; }
+    .upload-label { font-size: 0.85rem; color: var(--white-dim); }
+
+    /* ── SAVE TOAST ── */
+    .toast {
+      position: fixed; bottom: 2rem; right: 2rem;
+      background: var(--success);
+      color: #002a16;
+      padding: 0.8rem 1.6rem;
+      border-radius: 10px;
+      font-family: 'Syne', sans-serif;
+      font-weight: 700;
+      font-size: 0.88rem;
+      opacity: 0;
+      transform: translateY(12px);
+      transition: all .3s;
+      z-index: 999;
+      pointer-events: none;
+    }
+    .toast.show { opacity: 1; transform: none; }
+
+    /* ── RANGE ── */
+    input[type=range] {
+      padding: 0;
+      height: 5px;
+      accent-color: var(--accent);
+      background: var(--white-faint);
+      border: none;
+    }
+    .range-row { display: flex; align-items: center; gap: 1rem; }
+    .range-val { font-family: 'Syne', sans-serif; font-weight: 700; font-size: 0.9rem; color: var(--accent); min-width: 38px; }
+
+    /* ── MODAL ── */
+    .modal-overlay {
+      position: fixed; inset: 0;
+      background: rgba(5,10,25,0.75);
+      backdrop-filter: blur(4px);
+      z-index: 200;
+      display: none; align-items: center; justify-content: center;
+    }
+    .modal-overlay.open { display: flex; }
+    .modal {
+      background: var(--navy-mid);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 2rem;
+      width: 100%; max-width: 560px;
+      max-height: 90vh;
+      overflow-y: auto;
+    }
+    .modal-title { font-family: 'Syne', sans-serif; font-weight: 800; font-size: 1.1rem; margin-bottom: 1.4rem; }
+    .modal-actions { display: flex; justify-content: flex-end; gap: 0.7rem; margin-top: 1.4rem; }
+
+    /* ── SKILL TAG EDIT ── */
+    .skill-tags-edit { display: flex; flex-wrap: wrap; gap: 0.6rem; margin-bottom: 0.8rem; }
+    .skill-tag-e {
+      background: var(--white-faint);
+      border: 1px solid var(--border);
+      border-radius: 100px;
+      padding: 0.35rem 0.9rem;
+      font-size: 0.82rem;
+      display: flex; align-items: center; gap: 0.5rem;
+    }
+    .skill-tag-e button { background: none; border: none; color: var(--danger); cursor: pointer; font-size: 0.9rem; padding: 0; line-height: 1; }
+
+    @media(max-width: 900px) {
+      .sidebar { width: 200px; }
+      .main { margin-left: 200px; padding: 1.5rem; }
+      .form-grid { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- SIDEBAR -->
+<aside class="sidebar">
+  <div class="sidebar-logo">
+    Portfolio Admin
+    <span>Control Panel</span>
+  </div>
+  <nav class="sidebar-nav">
+    <div class="nav-item active" data-panel="profile">
+      <span class="nav-icon">👤</span> Profile
+    </div>
+    <div class="nav-item" data-panel="experience">
+      <span class="nav-icon">💼</span> Experience
+    </div>
+    <div class="nav-item" data-panel="education">
+      <span class="nav-icon">🎓</span> Education
+    </div>
+    <div class="nav-item" data-panel="skills">
+      <span class="nav-icon">⚡</span> Skills
+    </div>
+    <div class="nav-item" data-panel="tools">
+      <span class="nav-icon">🛠️</span> Tools
+    </div>
+    <div class="nav-item" data-panel="certificates">
+      <span class="nav-icon">🏅</span> Certificates
+    </div>
+    <div class="nav-item" data-panel="language">
+      <span class="nav-icon">🌐</span> Languages
+    </div>
+  </nav>
+  <div class="sidebar-footer">
+    <a class="btn-preview" href="portfolio.html" target="_blank">👁 View Portfolio</a>
+  </div>
+</aside>
+
+<!-- MAIN -->
+<main class="main">
+
+  <!-- PROFILE -->
+  <div class="panel active" id="panel-profile">
+    <div class="page-header">
+      <h1>Profile</h1>
+      <p>Edit informasi utama yang tampil di halaman portfolio.</p>
+    </div>
+    <div class="section-card">
+      <div class="section-card-title">Foto Profil</div>
+      <div class="photo-upload-area" id="photo-drop">
+        <div class="photo-placeholder" id="photo-icon">📷</div>
+        <img id="photo-preview-img" class="photo-preview" style="display:none"/>
+        <div class="upload-label">Klik atau drag &amp; drop foto di sini</div>
+        <input type="file" id="photo-input" accept="image/*">
+      </div>
+    </div>
+    <div class="section-card">
+      <div class="section-card-title">Identitas</div>
+      <div class="form-grid">
+        <div class="form-group">
+          <label>Nama Depan</label>
+          <input type="text" id="p-firstname" placeholder="Muhammad">
+        </div>
+        <div class="form-group">
+          <label>Nama Belakang / Highlight</label>
+          <input type="text" id="p-lastname" placeholder="Naufal">
+        </div>
+        <div class="form-group">
+          <label>Inisial (Nav Logo)</label>
+          <input type="text" id="p-initials" placeholder="MN" maxlength="4">
+        </div>
+        <div class="form-group">
+          <label>Role / Jabatan</label>
+          <input type="text" id="p-role" placeholder="UI/UX Designer & Developer">
+        </div>
+        <div class="form-group form-full">
+          <label>Bio / Deskripsi Singkat</label>
+          <textarea id="p-bio" placeholder="Ceritakan tentang dirimu..."></textarea>
+        </div>
+      </div>
+    </div>
+    <div class="section-card">
+      <div class="section-card-title">Kontak & Sosial</div>
+      <div class="form-grid">
+        <div class="form-group">
+          <label>Email</label>
+          <input type="email" id="p-email" placeholder="email@example.com">
+        </div>
+        <div class="form-group">
+          <label>Lokasi</label>
+          <input type="text" id="p-location" placeholder="Batam, Indonesia">
+        </div>
+        <div class="form-group">
+          <label>LinkedIn Username</label>
+          <input type="text" id="p-linkedin" placeholder="username (tanpa https)">
+        </div>
+        <div class="form-group">
+          <label>GitHub Username</label>
+          <input type="text" id="p-github" placeholder="username (tanpa https)">
+        </div>
+      </div>
+    </div>
+    <button class="btn btn-primary" onclick="saveProfile()">💾 Simpan Profile</button>
+  </div>
+
+  <!-- EXPERIENCE -->
+  <div class="panel" id="panel-experience">
+    <div class="page-header">
+      <h1>Experience</h1>
+      <p>Tambah, edit, atau hapus pengalaman kerja.</p>
+    </div>
+    <div class="section-card">
+      <div class="section-card-title">
+        Daftar Pengalaman
+        <button class="btn btn-primary btn-sm" onclick="openModal('exp')">+ Tambah</button>
+      </div>
+      <div id="experience-list"></div>
+    </div>
+  </div>
+
+  <!-- EDUCATION -->
+  <div class="panel" id="panel-education">
+    <div class="page-header">
+      <h1>Education</h1>
+      <p>Kelola riwayat pendidikan kamu.</p>
+    </div>
+    <div class="section-card">
+      <div class="section-card-title">
+        Riwayat Pendidikan
+        <button class="btn btn-primary btn-sm" onclick="openModal('edu')">+ Tambah</button>
+      </div>
+      <div id="education-list"></div>
+    </div>
+  </div>
+
+  <!-- SKILLS -->
+  <div class="panel" id="panel-skills">
+    <div class="page-header">
+      <h1>Skills</h1>
+      <p>Kelola skill / keahlian yang kamu miliki.</p>
+    </div>
+    <div class="section-card">
+      <div class="section-card-title">Daftar Skill</div>
+      <div class="skill-tags-edit" id="skills-tags-edit"></div>
+      <div style="display:flex;gap:.7rem;margin-top:.5rem">
+        <input type="text" id="skill-input" placeholder="Nama skill..." style="max-width:240px">
+        <button class="btn btn-primary" onclick="addSkill()">+ Tambah</button>
+      </div>
+    </div>
+    <button class="btn btn-primary" onclick="saveSkills()">💾 Simpan Skills</button>
+  </div>
+
+  <!-- TOOLS -->
+  <div class="panel" id="panel-tools">
+    <div class="page-header">
+      <h1>Tools</h1>
+      <p>Tambah atau hapus tools/software yang kamu gunakan.</p>
+    </div>
+    <div class="section-card">
+      <div class="section-card-title">
+        Daftar Tools
+        <button class="btn btn-primary btn-sm" onclick="openModal('tool')">+ Tambah</button>
+      </div>
+      <div id="tools-list"></div>
+    </div>
+  </div>
+
+  <!-- CERTIFICATES -->
+  <div class="panel" id="panel-certificates">
+    <div class="page-header">
+      <h1>Certificates</h1>
+      <p>Kelola sertifikat dan penghargaan.</p>
+    </div>
+    <div class="section-card">
+      <div class="section-card-title">
+        Daftar Sertifikat
+        <button class="btn btn-primary btn-sm" onclick="openModal('cert')">+ Tambah</button>
+      </div>
+      <div id="cert-list"></div>
+    </div>
+  </div>
+
+  <!-- LANGUAGE -->
+  <div class="panel" id="panel-language">
+    <div class="page-header">
+      <h1>Languages</h1>
+      <p>Kelola bahasa yang kamu kuasai.</p>
+    </div>
+    <div class="section-card">
+      <div class="section-card-title">
+        Daftar Bahasa
+        <button class="btn btn-primary btn-sm" onclick="openModal('lang')">+ Tambah</button>
+      </div>
+      <div id="lang-list"></div>
+    </div>
+  </div>
+
+</main>
+
+<!-- ── MODALS ── -->
+<!-- Experience Modal -->
+<div class="modal-overlay" id="modal-exp">
+  <div class="modal">
+    <div class="modal-title" id="modal-exp-title">Tambah Pengalaman</div>
+    <div class="form-grid">
+      <div class="form-group"><label>Jabatan</label><input type="text" id="exp-title" placeholder="UI/UX Designer"></div>
+      <div class="form-group"><label>Perusahaan</label><input type="text" id="exp-company" placeholder="PT. Nama Perusahaan"></div>
+      <div class="form-group"><label>Periode</label><input type="text" id="exp-period" placeholder="2022 – Now"></div>
+      <div class="form-group form-full"><label>Deskripsi</label><textarea id="exp-desc" placeholder="Ceritakan tanggung jawab kamu..."></textarea></div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-ghost" onclick="closeModal('exp')">Batal</button>
+      <button class="btn btn-primary" onclick="saveModalItem('exp')">Simpan</button>
+    </div>
+  </div>
+</div>
+
+<!-- Education Modal -->
+<div class="modal-overlay" id="modal-edu">
+  <div class="modal">
+    <div class="modal-title" id="modal-edu-title">Tambah Pendidikan</div>
+    <div class="form-grid">
+      <div class="form-group"><label>Gelar / Jurusan</label><input type="text" id="edu-degree" placeholder="S1 Teknik Informatika"></div>
+      <div class="form-group"><label>Sekolah / Universitas</label><input type="text" id="edu-school" placeholder="Universitas ..."></div>
+      <div class="form-group"><label>Periode</label><input type="text" id="edu-period" placeholder="2018 – 2022"></div>
+      <div class="form-group form-full"><label>Deskripsi</label><textarea id="edu-desc" placeholder="Tentang studi kamu..."></textarea></div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-ghost" onclick="closeModal('edu')">Batal</button>
+      <button class="btn btn-primary" onclick="saveModalItem('edu')">Simpan</button>
+    </div>
+  </div>
+</div>
+
+<!-- Tool Modal -->
+<div class="modal-overlay" id="modal-tool">
+  <div class="modal">
+    <div class="modal-title" id="modal-tool-title">Tambah Tool</div>
+    <div class="form-grid">
+      <div class="form-group"><label>Nama Tool</label><input type="text" id="tool-name" placeholder="Figma"></div>
+      <div class="form-group"><label>Emoji Icon</label><input type="text" id="tool-icon" placeholder="🎨" maxlength="4"></div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-ghost" onclick="closeModal('tool')">Batal</button>
+      <button class="btn btn-primary" onclick="saveModalItem('tool')">Simpan</button>
+    </div>
+  </div>
+</div>
+
+<!-- Certificate Modal -->
+<div class="modal-overlay" id="modal-cert">
+  <div class="modal">
+    <div class="modal-title" id="modal-cert-title">Tambah Sertifikat</div>
+    <div class="form-grid">
+      <div class="form-group form-full"><label>Nama Sertifikat</label><input type="text" id="cert-name" placeholder="Google UX Design Professional"></div>
+      <div class="form-group"><label>Penerbit</label><input type="text" id="cert-issuer" placeholder="Google / Coursera"></div>
+      <div class="form-group"><label>Tahun</label><input type="text" id="cert-year" placeholder="2023"></div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-ghost" onclick="closeModal('cert')">Batal</button>
+      <button class="btn btn-primary" onclick="saveModalItem('cert')">Simpan</button>
+    </div>
+  </div>
+</div>
+
+<!-- Language Modal -->
+<div class="modal-overlay" id="modal-lang">
+  <div class="modal">
+    <div class="modal-title" id="modal-lang-title">Tambah Bahasa</div>
+    <div class="form-grid">
+      <div class="form-group"><label>Bahasa</label><input type="text" id="lang-name" placeholder="English"></div>
+      <div class="form-group"><label>Level</label>
+        <select id="lang-level">
+          <option>Native</option>
+          <option>Fluent</option>
+          <option>Professional</option>
+          <option>Intermediate</option>
+          <option>Basic</option>
+        </select>
+      </div>
+      <div class="form-group form-full">
+        <label>Kemampuan (%)</label>
+        <div class="range-row">
+          <input type="range" id="lang-pct" min="10" max="100" step="5" value="80" oninput="document.getElementById('lang-pct-val').textContent=this.value+'%'">
+          <span class="range-val" id="lang-pct-val">80%</span>
+        </div>
+      </div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-ghost" onclick="closeModal('lang')">Batal</button>
+      <button class="btn btn-primary" onclick="saveModalItem('lang')">Simpan</button>
+    </div>
+  </div>
+</div>
+
+<!-- TOAST -->
+<div class="toast" id="toast">✓ Tersimpan!</div>
+
+<script>
+  // ── SUPABASE CONFIG ──
+  const SUPA_URL = 'https://ryhovztvgfuyfaxpbkzq.supabase.co';
+  const SUPA_KEY = 'sb_publishable_MMZNMh3PY1tPM5H18lHmHw_MwXoYjHH';
+
+  // ── STATE ──
+  let data = {};
+
+  const DEFAULT_DATA = {
+    profile: {},
+    experience: [{title:'UI/UX Designer',company:'PT. Kreasi Digital',period:'2022 – Now',desc:'Designing user interfaces for mobile and web applications.'}],
+    education: [{degree:'S1 Teknik Informatika',school:'Universitas Batam',period:'2018 – 2022',desc:'Focused on software engineering.'}],
+    skills: ['UI/UX Design','HTML & CSS','JavaScript','Vue.js','Responsive Design','Figma Prototyping'],
+    tools: [{icon:'🎨',name:'Figma'},{icon:'⚡',name:'VS Code'},{icon:'🌿',name:'Git'},{icon:'🔵',name:'Vue.js'}],
+    certificates: [{name:'Google UX Design Professional',issuer:'Google / Coursera',year:'2023'}],
+    languages: [{name:'Indonesian',level:'Native',pct:100},{name:'English',level:'Professional',pct:80}]
+  };
+
+  async function loadFromSupabase() {
+    try {
+      const res = await fetch(`${SUPA_URL}/rest/v1/portfolio?id=eq.main&select=data`, {
+        headers: { 'apikey': SUPA_KEY, 'Authorization': 'Bearer ' + SUPA_KEY }
+      });
+      const rows = await res.json();
+      const remote = (rows && rows[0] && Object.keys(rows[0].data).length) ? rows[0].data : DEFAULT_DATA;
+      data = remote;
+      if (!data.profile) data.profile = {};
+      if (!data.experience) data.experience = DEFAULT_DATA.experience;
+      if (!data.education) data.education = DEFAULT_DATA.education;
+      if (!data.skills) data.skills = DEFAULT_DATA.skills;
+      if (!data.tools) data.tools = DEFAULT_DATA.tools;
+      if (!data.certificates) data.certificates = DEFAULT_DATA.certificates;
+      if (!data.languages) data.languages = DEFAULT_DATA.languages;
+    } catch(e) {
+      data = {...DEFAULT_DATA};
+    }
+    loadProfileForm();
+    renderExperience(); renderEducation(); renderSkills();
+    renderTools(); renderCerts(); renderLanguages();
+  }
+
+  let editingIndex = null;
+
+  // ── NAV ──
+  document.querySelectorAll('.nav-item').forEach(item => {
+    item.addEventListener('click', () => {
+      document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+      document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+      item.classList.add('active');
+      document.getElementById('panel-' + item.dataset.panel).classList.add('active');
+    });
+  });
+
+  // ── PHOTO ──
+  document.getElementById('photo-input').addEventListener('change', e => {
+    const file = e.target.files[0]; if (!file) return;
+    const reader = new FileReader();
+    reader.onload = ev => {
+      data.profile.photo = ev.target.result;
+      showPhotoPreview(ev.target.result);
+      saveData();
+    };
+    reader.readAsDataURL(file);
+  });
+  function showPhotoPreview(src) {
+    document.getElementById('photo-icon').style.display = 'none';
+    const img = document.getElementById('photo-preview-img');
+    img.src = src; img.style.display = 'block';
+  }
+
+  // ── PROFILE ──
+  function loadProfileForm() {
+    const p = data.profile;
+    document.getElementById('p-firstname').value = p.firstName || '';
+    document.getElementById('p-lastname').value = p.lastName || '';
+    document.getElementById('p-initials').value = p.initials || '';
+    document.getElementById('p-role').value = p.role || '';
+    document.getElementById('p-bio').value = p.bio || '';
+    document.getElementById('p-email').value = p.email || '';
+    document.getElementById('p-location').value = p.location || '';
+    document.getElementById('p-linkedin').value = p.linkedin || '';
+    document.getElementById('p-github').value = p.github || '';
+    if (p.photo) showPhotoPreview(p.photo);
+  }
+  function saveProfile() {
+    data.profile = {
+      ...data.profile,
+      firstName: document.getElementById('p-firstname').value,
+      lastName: document.getElementById('p-lastname').value,
+      initials: document.getElementById('p-initials').value,
+      role: document.getElementById('p-role').value,
+      bio: document.getElementById('p-bio').value,
+      email: document.getElementById('p-email').value,
+      location: document.getElementById('p-location').value,
+      linkedin: document.getElementById('p-linkedin').value,
+      github: document.getElementById('p-github').value,
+    };
+    saveData(); showToast();
+  }
+
+  // ── MODALS ──
+  function openModal(type, idx) {
+    editingIndex = idx !== undefined ? idx : null;
+    const overlay = document.getElementById('modal-' + type);
+    overlay.classList.add('open');
+
+    if (type === 'exp') {
+      document.getElementById('modal-exp-title').textContent = idx !== undefined ? 'Edit Pengalaman' : 'Tambah Pengalaman';
+      const item = idx !== undefined ? data.experience[idx] : {};
+      document.getElementById('exp-title').value = item.title || '';
+      document.getElementById('exp-company').value = item.company || '';
+      document.getElementById('exp-period').value = item.period || '';
+      document.getElementById('exp-desc').value = item.desc || '';
+    }
+    if (type === 'edu') {
+      document.getElementById('modal-edu-title').textContent = idx !== undefined ? 'Edit Pendidikan' : 'Tambah Pendidikan';
+      const item = idx !== undefined ? data.education[idx] : {};
+      document.getElementById('edu-degree').value = item.degree || '';
+      document.getElementById('edu-school').value = item.school || '';
+      document.getElementById('edu-period').value = item.period || '';
+      document.getElementById('edu-desc').value = item.desc || '';
+    }
+    if (type === 'tool') {
+      document.getElementById('modal-tool-title').textContent = idx !== undefined ? 'Edit Tool' : 'Tambah Tool';
+      const item = idx !== undefined ? data.tools[idx] : {};
+      document.getElementById('tool-name').value = item.name || '';
+      document.getElementById('tool-icon').value = item.icon || '';
+    }
+    if (type === 'cert') {
+      document.getElementById('modal-cert-title').textContent = idx !== undefined ? 'Edit Sertifikat' : 'Tambah Sertifikat';
+      const item = idx !== undefined ? data.certificates[idx] : {};
+      document.getElementById('cert-name').value = item.name || '';
+      document.getElementById('cert-issuer').value = item.issuer || '';
+      document.getElementById('cert-year').value = item.year || '';
+    }
+    if (type === 'lang') {
+      document.getElementById('modal-lang-title').textContent = idx !== undefined ? 'Edit Bahasa' : 'Tambah Bahasa';
+      const item = idx !== undefined ? data.languages[idx] : { pct: 80, level: 'Professional' };
+      document.getElementById('lang-name').value = item.name || '';
+      document.getElementById('lang-level').value = item.level || 'Professional';
+      document.getElementById('lang-pct').value = item.pct || 80;
+      document.getElementById('lang-pct-val').textContent = (item.pct || 80) + '%';
+    }
+  }
+  function closeModal(type) {
+    document.getElementById('modal-' + type).classList.remove('open');
+    editingIndex = null;
+  }
+  document.querySelectorAll('.modal-overlay').forEach(o => {
+    o.addEventListener('click', e => { if (e.target === o) o.classList.remove('open'); });
+  });
+
+  function saveModalItem(type) {
+    if (type === 'exp') {
+      const item = { title: document.getElementById('exp-title').value, company: document.getElementById('exp-company').value, period: document.getElementById('exp-period').value, desc: document.getElementById('exp-desc').value };
+      if (editingIndex !== null) data.experience[editingIndex] = item; else data.experience.push(item);
+      renderExperience();
+    }
+    if (type === 'edu') {
+      const item = { degree: document.getElementById('edu-degree').value, school: document.getElementById('edu-school').value, period: document.getElementById('edu-period').value, desc: document.getElementById('edu-desc').value };
+      if (editingIndex !== null) data.education[editingIndex] = item; else data.education.push(item);
+      renderEducation();
+    }
+    if (type === 'tool') {
+      const item = { name: document.getElementById('tool-name').value, icon: document.getElementById('tool-icon').value || '🔧' };
+      if (editingIndex !== null) data.tools[editingIndex] = item; else data.tools.push(item);
+      renderTools();
+    }
+    if (type === 'cert') {
+      const item = { name: document.getElementById('cert-name').value, issuer: document.getElementById('cert-issuer').value, year: document.getElementById('cert-year').value };
+      if (editingIndex !== null) data.certificates[editingIndex] = item; else data.certificates.push(item);
+      renderCerts();
+    }
+    if (type === 'lang') {
+      const item = { name: document.getElementById('lang-name').value, level: document.getElementById('lang-level').value, pct: +document.getElementById('lang-pct').value };
+      if (editingIndex !== null) data.languages[editingIndex] = item; else data.languages.push(item);
+      renderLanguages();
+    }
+    saveData(); closeModal(type); showToast();
+  }
+
+  // ── RENDER LISTS ──
+  function renderExperience() {
+    document.getElementById('experience-list').innerHTML = data.experience.map((e, i) => `
+      <div class="list-item">
+        <div class="list-item-body">
+          <div class="list-item-title">${e.title}</div>
+          <div class="list-item-sub">${e.company} — ${e.period}</div>
+          <div class="list-item-desc">${e.desc}</div>
+        </div>
+        <div class="list-item-actions">
+          <button class="btn btn-ghost btn-sm" onclick="openModal('exp',${i})">✏️</button>
+          <button class="btn btn-danger btn-sm" onclick="deleteItem('experience',${i})">🗑</button>
+        </div>
+      </div>`).join('');
+  }
+  function renderEducation() {
+    document.getElementById('education-list').innerHTML = data.education.map((e, i) => `
+      <div class="list-item">
+        <div class="list-item-body">
+          <div class="list-item-title">${e.degree}</div>
+          <div class="list-item-sub">${e.school} — ${e.period}</div>
+          <div class="list-item-desc">${e.desc}</div>
+        </div>
+        <div class="list-item-actions">
+          <button class="btn btn-ghost btn-sm" onclick="openModal('edu',${i})">✏️</button>
+          <button class="btn btn-danger btn-sm" onclick="deleteItem('education',${i})">🗑</button>
+        </div>
+      </div>`).join('');
+  }
+  function renderSkills() {
+    document.getElementById('skills-tags-edit').innerHTML = data.skills.map((s, i) => `
+      <div class="skill-tag-e">${s}<button onclick="removeSkill(${i})">×</button></div>`).join('');
+  }
+  function renderTools() {
+    document.getElementById('tools-list').innerHTML = data.tools.map((t, i) => `
+      <div class="list-item">
+        <div class="list-item-body" style="display:flex;align-items:center;gap:.8rem">
+          <span style="font-size:1.5rem">${t.icon}</span>
+          <div class="list-item-title">${t.name}</div>
+        </div>
+        <div class="list-item-actions">
+          <button class="btn btn-ghost btn-sm" onclick="openModal('tool',${i})">✏️</button>
+          <button class="btn btn-danger btn-sm" onclick="deleteItem('tools',${i})">🗑</button>
+        </div>
+      </div>`).join('');
+  }
+  function renderCerts() {
+    document.getElementById('cert-list').innerHTML = data.certificates.map((c, i) => `
+      <div class="list-item">
+        <div class="list-item-body">
+          <div class="list-item-title">🏅 ${c.name}</div>
+          <div class="list-item-sub">${c.issuer} — ${c.year}</div>
+        </div>
+        <div class="list-item-actions">
+          <button class="btn btn-ghost btn-sm" onclick="openModal('cert',${i})">✏️</button>
+          <button class="btn btn-danger btn-sm" onclick="deleteItem('certificates',${i})">🗑</button>
+        </div>
+      </div>`).join('');
+  }
+  function renderLanguages() {
+    document.getElementById('lang-list').innerHTML = data.languages.map((l, i) => `
+      <div class="list-item">
+        <div class="list-item-body">
+          <div class="list-item-title">${l.name}</div>
+          <div class="list-item-sub">${l.level} — ${l.pct}%</div>
+        </div>
+        <div class="list-item-actions">
+          <button class="btn btn-ghost btn-sm" onclick="openModal('lang',${i})">✏️</button>
+          <button class="btn btn-danger btn-sm" onclick="deleteItem('languages',${i})">🗑</button>
+        </div>
+      </div>`).join('');
+  }
+
+  // ── SKILLS ──
+  function addSkill() {
+    const v = document.getElementById('skill-input').value.trim();
+    if (!v) return;
+    data.skills.push(v);
+    document.getElementById('skill-input').value = '';
+    renderSkills(); saveData();
+  }
+  document.getElementById('skill-input').addEventListener('keydown', e => { if (e.key === 'Enter') addSkill(); });
+  function removeSkill(i) { data.skills.splice(i, 1); renderSkills(); saveData(); }
+  function saveSkills() { saveData(); showToast(); }
+
+  // ── DELETE ──
+  function deleteItem(key, i) {
+    if (!confirm('Hapus item ini?')) return;
+    data[key].splice(i, 1);
+    if (key === 'experience') renderExperience();
+    if (key === 'education') renderEducation();
+    if (key === 'tools') renderTools();
+    if (key === 'certificates') renderCerts();
+    if (key === 'languages') renderLanguages();
+    saveData(); showToast('Terhapus!');
+  }
+
+  // ── SAVE / TOAST ──
+  async function saveData() {
+    try {
+      await fetch(`${SUPA_URL}/rest/v1/portfolio?id=eq.main`, {
+        method: 'PATCH',
+        headers: {
+          'apikey': SUPA_KEY,
+          'Authorization': 'Bearer ' + SUPA_KEY,
+          'Content-Type': 'application/json',
+          'Prefer': 'return=minimal'
+        },
+        body: JSON.stringify({ data: data, updated_at: new Date().toISOString() })
+      });
+    } catch(e) { console.error('Save failed:', e); }
+  }
+  function showToast(msg) {
+    const t = document.getElementById('toast');
+    t.textContent = msg ? '✓ ' + msg : '✓ Tersimpan!';
+    t.classList.add('show');
+    setTimeout(() => t.classList.remove('show'), 2200);
+  }
+
+  // ── INIT ──
+  loadFromSupabase();
+</script>
+</body>
+</html>
